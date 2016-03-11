@@ -1,4 +1,4 @@
-## .htaccess IP address formatter
+## .htaccess IP address consolidator
 
 This software is released **AS IS** with **ABSOLUTELY NO GUARANTEE THAT IT WILL BE OF ANY USE OR NOT CAUSE DAMAGE IF USED IMPROPERLY**
 

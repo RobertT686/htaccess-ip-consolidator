@@ -1,4 +1,4 @@
-## .htaccess IP address formatter
+## .htaccess IP address consolidator
 
 The purpose of this program is to take multiple lists of IP addresses and merge them together into a format used by Apache's .htaccess files, with similar IP addresses sorted near each other and IP addresses with identical subnets on the same line (ex. x.x.0.1 and x.x.0.2 vs. x.y.0.3).
 

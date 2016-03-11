@@ -1,4 +1,4 @@
-package htaccessdeny;
+package htaccessconsolidate;
 
 /*
  * Robert Tweedy
