@@ -6,9 +6,12 @@ package htaccessdeny;
  * Creates a consolidated list of IP addresses for the purpose of denying 
  *  access in a .htaccess file from one or more sources.
  * First Published: May 30, 2013
- * Last Modified: May 30, 2013
+ * Last Modified: March 10, 2016
+ * -Updated it to use Apache 2.4's "Require IP" syntax instead of the old
+ * 	"deny from" syntax.
+ * -Added in IPv6 support.
  * 
- * Version 1.0
+ * Version 2.0
  */
 
 import java.io.BufferedReader;
@@ -16,11 +19,16 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.StringTokenizer;
+import java.util.Arrays;
 import java.util.TreeSet;
 
 public class IPConsolidator
 {
+	//Original regexes found on regexlib.com
+	//TODO Adjust these so that they're better.
+	private static final String IPv4_REGEX = "^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9]{1,2})(\\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9]{1,2})){0,3}/?\\d?\\d?$";
+	private static final String IPv6_REGEX = "^(::|(([a-fA-F0-9]{1,4}):){7}(([a-fA-F0-9]{1,4}))|(:(:([a-fA-F0-9]{1,4})){1,6})|((([a-fA-F0-9]{1,4}):){1,6}:)|((([a-fA-F0-9]{1,4}):)(:([a-fA-F0-9]{1,4})){1,6})|((([a-fA-F0-9]{1,4}):){2}(:([a-fA-F0-9]{1,4})){1,5})|((([a-fA-F0-9]{1,4}):){3}(:([a-fA-F0-9]{1,4})){1,4})|((([a-fA-F0-9]{1,4}):){4}(:([a-fA-F0-9]{1,4})){1,3})|((([a-fA-F0-9]{1,4}):){5}(:([a-fA-F0-9]{1,4})){1,2}))/?\\d?\\d?\\d?$";
+	
 	private TreeSet<String> consolidatedIPList = new TreeSet<String>();
 	private boolean successfulLoad = true; //Did all files load successfully?
 	
@@ -41,8 +49,8 @@ public class IPConsolidator
 	private boolean readFile(String filePath)
 	{
 		boolean result = false;
-		String fullLine, subString;
-		StringTokenizer stringToken, subToken;
+		String fullLine;
+		String[] stringToken;
 		
 		try
 		{
@@ -51,23 +59,16 @@ public class IPConsolidator
 			while (file.ready())
 			{
 				fullLine = file.readLine();
-				stringToken = new StringTokenizer(fullLine, " ");
+				stringToken = fullLine.split("\\s");
 				
-				while(stringToken.hasMoreTokens())
+				for(String subString : stringToken)
 				{
-					subString = stringToken.nextToken();
-					subToken = new StringTokenizer(subString, ".");
-					
-					if(subToken.countTokens() == 4)
-					{
-						//An IPv4 address is in the form a.b.c.d/e, so 
-						//if there are 4 tokens in the subtoken, and the
-						//input data is assumed to be good, then the subString
-						//must be an IP address.
+					//TODO Currently ALL input data is assumed to be good;
+					//garbage in=garbage out!
+					if(subString.matches(IPv4_REGEX) || subString.matches(IPv6_REGEX))
 						consolidatedIPList.add(subString);
-					}//if
-					
-				}//while stringToken.hasMoreTokens()
+										
+				}//foreach subString : stringToken
 			}//while file.ready()
 			
 			file.close();
@@ -100,12 +101,14 @@ public class IPConsolidator
 	 */
 	public boolean writeFile(String fileName)
 	{
-		//This method can be updated to write a file for allowed IP addresses instead of denied ones.
+		//TODO Fix sorting so that it sorts correctly.
+		//TODO This includes separating IPv4 from IPv6 in the results.
 		boolean result = false;
+		boolean isIPv6 = false;
 		String currentIPAddress, currentSubRange;
 		String workingSubRange = "null";
 		
-		StringTokenizer subIP;
+		String[] subIP;
 		
 		try
 		{
@@ -113,9 +116,22 @@ public class IPConsolidator
 			
 			for(String ipAddr : consolidatedIPList)
 			{
+				//TODO See if I can just use ipAddr directly; I forget why I did it this way
+				//TODO before.
 				currentIPAddress = ipAddr;
-				subIP = new StringTokenizer(currentIPAddress, ".");
-				currentSubRange = subIP.nextToken() + "." + subIP.nextToken();
+				if (currentIPAddress.matches(IPv6_REGEX))
+					isIPv6 = true;
+				else
+					isIPv6 = false;
+				
+				subIP = currentIPAddress.split("[.]|:");
+				//TODO Improve this significantly.
+				if(!isIPv6 && subIP.length >= 2)
+					currentSubRange = subIP[0] + "." + subIP[1];
+				else if(isIPv6 && subIP.length >= 3)
+					currentSubRange = subIP[0] + ":" + subIP[1] + ":" + subIP[2];
+				else
+					currentSubRange = Arrays.toString(subIP);
 				
 				if(!workingSubRange.equals(currentSubRange))
 				{
@@ -125,7 +141,7 @@ public class IPConsolidator
 						file.println();
 					}//if
 					
-					file.print("deny from ");
+					file.print("Require ip ");
 					workingSubRange = currentSubRange;
 				}//if
 				else

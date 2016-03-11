@@ -3,11 +3,12 @@ package htaccessdeny;
 /*
  * Robert Tweedy
  * TextFrontend.java
- * Text-based frontend to .htaccess Deny consolidator.
+ * Text-based frontend to .htaccess IP consolidator.
  * First Published: May 30, 2013
- * Last Modified: May 30, 2013
+ * Last Modified: March 10, 2016
+ * - Changed the text to be more generic since it's no longer explicitly for denied IPs.
  * 
- * Version 1.0
+ * Version 1.1
  */
 
 public class TextFrontend
@@ -15,12 +16,15 @@ public class TextFrontend
 
 	/**
 	 * @param args
-	 * -The file name(s) with IPv4 addresses to check and consolidate.
+	 * -The file name(s) with IP addresses to check and consolidate.
 	 */
 	public static void main(String[] args)
 	{
-		System.out.println("Text based .htaccess deny from IP generator.");
-		System.out.println("©2013 Robert Tweedy");
+		String outFilename = "consolidatedIPs.txt";
+		
+		System.out.println();
+		System.out.println(".htaccess IP list consolidator.");
+		System.out.println("©2013-2016 Robert Tweedy");
 		System.out.println();
 
 		if(args.length == 0)
@@ -35,11 +39,11 @@ public class TextFrontend
 
 			if(ipListGenerator.loadedSuccessfully())
 			{
-				System.out.println("Writing consolidated deny file...");
+				System.out.println("Writing consolidated IP list file...");
 				
-				if(ipListGenerator.writeFile("deniedIPs.txt"))
+				if(ipListGenerator.writeFile(outFilename))
 				{
-					System.out.println("File successfully written as \"deniedIPs.txt\"");
+					System.out.println("File successfully written as \"" + outFilename + "\"");
 				}//if
 				else
 				{
@@ -49,8 +53,8 @@ public class TextFrontend
 			}//if
 			else
 			{
-				System.out.println("Unable to generate a list of denied IPs.");
-				System.out.println("Check the specified files to make sure they exist.");
+				System.out.println("Unable to generate a list of IP addresses.");
+				System.out.println("Check the specified files to make sure they exist and that you have\nread permissions on them.");
 			}//else
 		}//else
 		
